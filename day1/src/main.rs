@@ -9,7 +9,6 @@
 /// Because Part 2 requires the ability to "jump ahead", I decided to scrap the
 /// Iterator approach and instead implement std::ops::Index to allow for rewriting
 /// the index access location for arbitrary values of "looping" through the input vec.
-
 use std::io::{self, Read};
 
 #[test]

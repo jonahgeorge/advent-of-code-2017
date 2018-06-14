@@ -15,32 +15,34 @@ struct Sheet {
 }
 
 impl Sheet {
-    fn from_string(buf: String) -> Self {
-        Sheet {
-            rows: buf.lines()
-                .map(|line| {
-                    Row::new(
-                        line.trim()
-                            .split_whitespace()
-                            .map(|column| column.parse::<u32>().unwrap()) // Question: Better way to handle invalid input?
-                            .collect::<Vec<_>>(),
-                    )
-                })
-                .collect::<Vec<_>>(),
-        }
+    fn new(rows: Vec<Row>) -> Self {
+        Sheet { rows: rows }
     }
 
-    fn checksum1(self) -> u32 {
+    fn from_string(buf: String) -> Self {
+        let rows = buf.lines()
+            .map(|line| {
+                let columns = line.trim()
+                            .split_whitespace()
+                            .map(|column| column.parse::<u32>().unwrap()) // Question: Better way to handle invalid input?
+                            .collect::<Vec<_>>();
+
+                Row::new(columns)
+            })
+            .collect::<Vec<_>>();
+
+        Sheet::new(rows)
+    }
+
+    fn checksum1(&self) -> u32 {
         self.rows.iter().fold(0, |acc, row| {
-            // Question: is there a way to remove `.clone()` here?
-            return acc + row.clone().checksum1();
+            return acc + row.checksum1();
         })
     }
 
-    fn checksum2(self) -> u32 {
+    fn checksum2(&self) -> u32 {
         self.rows.iter().fold(0, |acc, row| {
-            // Question: similarly, can `.clone()` be removed?
-            let checksum = row.clone().checksum2();
+            let checksum = row.checksum2();
             if checksum.is_some() {
                 return acc + checksum.unwrap();
             }
@@ -55,7 +57,7 @@ struct Row {
 }
 
 // Permutates vals returning a vector of tuples
-fn permutations(vals: Vec<u32>) -> Vec<(u32, u32)> {
+fn permutations(vals: &[u32]) -> Vec<(u32, u32)> {
     let mut permutations: Vec<(u32, u32)> = Vec::new();
 
     for (a, a_item) in vals.iter().enumerate() {
@@ -76,8 +78,8 @@ impl Row {
         Row { columns: columns }
     }
 
-    fn checksum2(self) -> Option<u32> {
-        for perm in permutations(self.columns) {
+    fn checksum2(&self) -> Option<u32> {
+        for perm in permutations(&self.columns) {
             let remainder = perm.0 % perm.1;
 
             if remainder == 0 {
@@ -88,11 +90,11 @@ impl Row {
         None
     }
 
-    fn checksum1(self) -> u32 {
+    fn checksum1(&self) -> u32 {
         let mut max = None;
         let mut min = None;
 
-        for c in self.columns {
+        for c in &self.columns {
             if max.is_none() {
                 max = Some(c);
             }
@@ -160,9 +162,9 @@ fn sheet_checksum2() {
 
 #[test]
 fn permutate() {
-    assert_eq!(vec![(1, 2), (2, 1)], permutations(vec![1, 2]));
+    assert_eq!(vec![(1, 2), (2, 1)], permutations(&[1, 2]));
     assert_eq!(
         vec![(1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2)],
-        permutations(vec![1, 2, 3])
+        permutations(&[1, 2, 3])
     );
 }
