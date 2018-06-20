@@ -1,4 +1,10 @@
+#![feature(test)]
+
+extern crate test;
+
+use std::fs::File;
 use std::io::{self, Read};
+use test::Bencher;
 
 fn main() {
     let mut input = String::new();
@@ -91,28 +97,50 @@ impl Row {
     }
 
     fn checksum1(&self) -> u32 {
-        let mut max = None;
-        let mut min = None;
-
-        for c in &self.columns {
-            if max.is_none() {
-                max = Some(c);
+        let res = &self.columns.iter().fold((None, None), |mut acc, column| {
+            if acc.0.is_none() {
+                acc.0 = Some(column);
             }
 
-            if min.is_none() {
-                min = Some(c);
+            if acc.1.is_none() {
+                acc.1 = Some(column);
             }
 
-            if c > max.unwrap() {
-                max = Some(c);
+            if column > acc.0.unwrap() {
+                acc.0 = Some(column);
             }
 
-            if c < min.unwrap() {
-                min = Some(c);
+            if column < acc.1.unwrap() {
+                acc.1 = Some(column);
             }
-        }
 
-        return max.unwrap() - min.unwrap();
+            acc
+        });
+
+        return res.0.unwrap() - res.1.unwrap();
+
+        // let mut max = None;
+        // let mut min = None;
+
+        // for c in &self.columns {
+        //     if max.is_none() {
+        //         max = Some(c);
+        //     }
+
+        //     if min.is_none() {
+        //         min = Some(c);
+        //     }
+
+        //     if c > max.unwrap() {
+        //         max = Some(c);
+        //     }
+
+        //     if c < min.unwrap() {
+        //         min = Some(c);
+        //     }
+        // }
+
+        // return max.unwrap() - min.unwrap();
     }
 }
 
@@ -167,4 +195,19 @@ fn permutate() {
         vec![(1, 2), (1, 3), (2, 1), (2, 3), (3, 1), (3, 2)],
         permutations(&[1, 2, 3])
     );
+}
+
+#[bench]
+fn bench_add_two(b: &mut Bencher) {
+    let mut f = File::open(
+        "/Users/jgeorge/Workspace/open-source/advent-of-code-2017/day2/benchmark.txt",
+    ).expect("file not found");
+
+    let mut contents = String::new();
+    f.read_to_string(&mut contents)
+        .expect("something went wrong reading the file");
+
+    let sheet = Sheet::from_string(contents);
+
+    b.iter(|| sheet.checksum2());
 }
